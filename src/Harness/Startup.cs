@@ -2,11 +2,15 @@ using GraphQL.Server;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
+using SB.GraphQL.Server.Auth;
 using SB.GraphQL.Server.Auth.Startup;
 
 namespace Harness
@@ -60,7 +64,7 @@ namespace Harness
             services.AddSingleton<HarnessSchema>();
             services.AddSingleton<IAggregate, Aggregate>();
 
-            //services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
             // extension method defined in this project
             services.AddGraphQLAuth((settings, provider) =>
@@ -75,8 +79,13 @@ namespace Harness
             // var user = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("role", "Admin") }));
 
             services
-                .AddGraphQL()
-                .AddSystemTextJson()
+                .AddGraphQL((options, provider) =>
+                {
+                    options.EnableMetrics = true; // Environment.IsDevelopment();
+                    var logger = provider.GetRequiredService<ILogger<Startup>>();
+                    options.UnhandledExceptionDelegate = ctx => logger.LogError("{Error} occurred", ctx.OriginalException.Message);
+                })
+                .AddSystemTextJson(deserializerSettings => { }, serializerSettings => { })
                 .AddUserContextBuilder(context => new GraphQLUserContext { User = context.User });
         }
 
@@ -99,7 +108,7 @@ namespace Harness
             // IdentityServer.
             app.UseJwtChallenge();
 
-            app.UseGraphQL<HarnessSchema>();
+            app.UseGraphQL<HarnessSchema, GraphQLHttpMiddlewareWithLogs<HarnessSchema>>();
             app.UseGraphQLGraphiQL();
             app.UseGraphQLPlayground();
         }

@@ -1,19 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Security.Claims;
-using GraphQL.Authorization;
 
 namespace Harness
 {
-    /// <summary>
-    /// Custom context class that implements <see cref="IProvideClaimsPrincipal"/>.
-    /// </summary>
-    public class GraphQLUserContext : Dictionary<string, object>, IProvideClaimsPrincipal
-    {
-        /// <inheritdoc />
-        public ClaimsPrincipal User { get; set; }
-    }
-
     /// <summary>
     /// CLR type to map to the 'Query' graph type.
     /// </summary>

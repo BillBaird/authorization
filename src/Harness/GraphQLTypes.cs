@@ -1,10 +1,8 @@
 using System;
+using System.Threading.Tasks;
 using GraphQL;
-using GraphQL.Authorization;
-using GraphQL.Server.Transports.AspNetCore;
 using GraphQL.Types;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
+using SB.GraphQL.Server.Auth;
 
 #pragma warning disable CS1591
 namespace Harness
@@ -28,33 +26,20 @@ namespace Harness
             FieldAsync<_UserType>("viewer",
                 resolve: async context =>
                 {
-                    var svc = (IServiceProvider)context.Schema;
-                    var userContextService = svc.GetService<IUserContextBuilder>();
-                    var httpContext = svc.GetService<IHttpContextAccessor>().HttpContext;
-                    var principle = httpContext.User;
-                    var user = await userContextService.BuildUserContext(httpContext);
-                    Console.WriteLine(user.Count);
-                    var uc = context.UserContext;
-                    var pcpUser = ((IProvideClaimsPrincipal)uc).User;
-                    Console.WriteLine(uc.Count.ToString());
+                    var claimsPrinciple = context.ClaimsPrincipal()!;
+                    //Console.WriteLine(claimsPrinciple!.Identity!.Name);
                     var result = aggregate.Viewer();
-                    return result;
+                    return await Task.FromResult(result);
                 }
             ).AuthorizeWith("KycEmailPolicy").AuthorizeWith("AuthenticatedPolicy");
 
             FieldAsync<ListGraphType<_UserType>>("users",
                 resolve: async context =>
                 {
-                    var svc = (IServiceProvider)context.Schema;
-                    var userContextService = svc.GetService<IUserContextBuilder>();
-                    var httpContext = svc.GetService<IHttpContextAccessor>().HttpContext;
-                    var principle = httpContext.User;
-                    var user = await userContextService.BuildUserContext(httpContext);
-                    Console.WriteLine(user.Count);
-                    var uc = context.UserContext;
-                    Console.WriteLine(uc.Count.ToString());
+                    var claimsPrinciple = context.ClaimsPrincipal()!;
+                    //Console.WriteLine(claimsPrinciple!.Identity!.Name);
                     var result = aggregate.Users();
-                    return result;
+                    return await Task.FromResult(result);
                 }
             ).AuthorizeWith("KycL1Policy");
             //).AuthorizeWith("AuthenticatedPolicy").AuthorizeWith("AdminPolicy");
