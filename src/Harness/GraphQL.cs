@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
-using GraphQL;
 using GraphQL.Authorization;
 
 namespace Harness
@@ -23,7 +22,6 @@ namespace Harness
         /// <summary>
         /// Resolver for 'Query.viewer' field.
         /// </summary>
-        [GraphQLAuthorize("AdminPolicy")]
         public User Viewer() => new User { Id = Guid.NewGuid().ToString(), Name = "Quinn" };
 
         /// <summary>
